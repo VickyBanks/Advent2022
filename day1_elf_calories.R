@@ -20,7 +20,8 @@ cal_per_elf<-
 cal_per_elf %>% head()
 
 ### task 2 -  find the total calories from the top 3 elves
-
+cal_per_elf %>% head(n=3) %>% 
+  summarise(total = sum(calsum))
 
 
 
