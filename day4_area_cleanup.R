@@ -8,7 +8,7 @@ input %>% head(n=10)
 
 ### Task 1 - How many elf pairs have one of their areas contained by the other's
 
-x<-input %>% #head(n=10) %>%
+x<-input %>% head(n=6) %>%
   separate(area_pairs, letters[1:4],',|-') %>%
   mutate_if(is.character,as.numeric) %>% 
   mutate(contained = case_when(a<=c & b>=d | a >= c & b<=d ~TRUE  )) %>%
