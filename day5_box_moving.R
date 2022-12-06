@@ -43,7 +43,72 @@ boxes
 
 steps %>% head()
 
-## function to loop over n times, removing the box from it's column and adding to the new column
+# ## function to loop over n times, removing the box from it's column and adding to the new column
+# complete_step <- function(row) {
+#   
+#   n <- steps$num_boxes[row]
+#   from <- steps$from[row]
+#   to <- steps$to[row]
+#   print(do.call(cbind, box_lists)) ##original
+#   
+#   for (x in 1:n) {
+#     ### find position of box that needs to move
+#     box_position <-tail(which(box_lists[[from]] != ''), 1)
+# 
+#     ## find position of empty spot to move it into, if the whole column is 0 set to 1
+#     if(identical(tail(which(box_lists[[to]] != '')), integer(0)) ) { 
+#       new_position <- 1
+#       }else{
+#       new_position <- tail(which(box_lists[[to]] != ''), 1)+1
+#       } 
+#     
+#     print(box_lists[[from]][[box_position]]) ## get element to move
+#     
+#     ## move element
+#     box_lists[[to]][[new_position]] <<-box_lists[[from]][[box_position]]
+#     ## remove element from original position
+#     box_lists[[from]][[box_position]] <<- ''
+#     
+#     
+#     ## this is for visual checking that it's working
+#     ### to bind boxes back together they need to be the same length
+#     
+#     ## if one column is longer than the others, even them out
+#     if(sapply(box_lists, length) %>% unique() %>% length()>1) {
+#       
+#       max_length <- max(sapply(box_lists, length))
+#       
+#       ## add blanks to make each list the same size
+#       for (i in 1:length(box_lists)) {
+#         if (length(box_lists[[i]]) < max_length) {
+#           box_lists[[i]] <<- box_lists[[i]] %>% append('')
+#         }
+#       }
+#     }
+#     
+#   
+#   }
+#   ## have a look
+#  print(do.call(cbind, box_lists))
+# }
+# steps %>% head()
+# 
+# ## loop over every step
+# for(row in 1: nrow(steps)){
+#   print(paste0("step ",row))
+#   print(steps[row,])
+#   complete_step(row)
+# }
+
+
+
+####### part 2 - the machine can now pick up all the blocks needed in one go
+# so in the example at the top, [B][V] will be taken as the pair and placed down in that order
+## giving [D],[W],[B],[V],[B]
+
+
+
+## new function removes the blocks in their chunks
 complete_step <- function(row) {
   
   n <- steps$num_boxes[row]
@@ -51,23 +116,26 @@ complete_step <- function(row) {
   to <- steps$to[row]
   print(do.call(cbind, box_lists)) ##original
   
-  for (x in 1:n) {
-    ### find position of box that needs to move
-    box_position <-tail(which(box_lists[[from]] != ''), 1)
 
+    ### find position of boxes that need to move
+    box_position <- tail(which(box_lists[[from]] != ''), 1)
+    all_box_pos<- rev(box_position-(0:(n-1))) ## get the position of all the boxes that need moving
+    
+   
     ## find position of empty spot to move it into, if the whole column is 0 set to 1
     if(identical(tail(which(box_lists[[to]] != '')), integer(0)) ) { 
       new_position <- 1
-      }else{
+    }else{
       new_position <- tail(which(box_lists[[to]] != ''), 1)+1
-      } 
+    } 
+    all_new_pos<-new_position+(0:(n-1))
     
-    print(box_lists[[from]][[box_position]]) ## get element to move
+    print(box_lists[[from]][all_box_pos]) ## get elements to move
     
     ## move element
-    box_lists[[to]][[new_position]] <<-box_lists[[from]][[box_position]]
+    box_lists[[to]][all_new_pos] <<- box_lists[[from]][all_box_pos]
     ## remove element from original position
-    box_lists[[from]][[box_position]] <<- ''
+    box_lists[[from]][all_box_pos] <<- ''
     
     
     ## this is for visual checking that it's working
@@ -78,41 +146,49 @@ complete_step <- function(row) {
       
       max_length <- max(sapply(box_lists, length))
       
+      
       ## add blanks to make each list the same size
       for (i in 1:length(box_lists)) {
         if (length(box_lists[[i]]) < max_length) {
-          box_lists[[i]] <<- box_lists[[i]] %>% append('')
+          
+          n_blanks = max_length - length(box_lists[[i]])
+          box_lists[[i]] <<- box_lists[[i]] %>% append(rep('',n_blanks))
         }
       }
-    }
     
-  
+    
+    
   }
   ## have a look
- print(do.call(cbind, box_lists))
+  print(do.call(cbind, box_lists))
 }
 steps %>% head()
 
 ## loop over every step
-for(row in 1: nrow(steps)){
+for(row in 1:nrow(steps)){
   print(paste0("step ",row))
   print(steps[row,])
   complete_step(row)
 }
 
 
+
 ## find the letters at the end of each list
 ## these correspond to the top of the box piles
-top_letter<-as.character()
-for(x in 1:9) {
+top_letter <- as.character()
+for (x in 1:9) {
   box = box_lists[[x]][[tail(which(box_lists[[x]] != ''), 1)]]
   print(box)
-  clean_letter =  gsub('\\]','', gsub('\\[','',box))
+  clean_letter =  gsub('\\]', '', gsub('\\[', '', box))
   print(clean_letter)
-  top_letter <- paste0(top_letter,clean_letter)
-  
-  
+  top_letter <- paste0(top_letter, clean_letter)
+
+
 }
 top_letter
 
-#PSNRGBTFT
+#for part 1 = PSNRGBTFT
+## for part 2  =BNTZFPMMW
+
+
+
