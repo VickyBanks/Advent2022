@@ -1,103 +1,149 @@
 library(tidyverse)
 
 ## read in data
-test<- read.csv("day7_test.csv")
-test<-test$output 
+# test<- read.csv("day7_test.csv")
+# test<-test$output 
+# 
+# input<- read.csv("day7_input.csv")
+# input<-input$output 
+# input %>% head()
 
-input<- read.csv("day7_input.csv")
-input<-input$output 
-input %>% head()
-x<-list()
+## internet solution
 
-for(i in 1:length(input)){
+input <- read.csv("day7_input.txt")
+eof <- nrow(input)
+
+fileCount <- 0
+fileList <- list()
+path <- "/"
+
+for (i in 1:eof){
   
-  if(grepl('\\$ ls', input[i]) ){
-    dir <- paste0('dir ',gsub('\\$ cd ', '',input[i-1]))
+  #tree <- tree$ls 
+  line <- input[i,]
+  splitLine <- strsplit(line," ")
+  splitLine <- splitLine[[1]]
+  print(splitLine)
+  # if the line is a directory make a path
+  if (splitLine[1] == "dir")
+  {
+    newpath <- paste(path, splitLine[2], "/", sep="")
+    print(paste0("new path =",newpath))
     
-    if(dir == 'dir /'){ dir = 'dir top'} ## just to make life easier
-    
-    print(dir)
-    for(j in 1:(length(input)-i) ){
-      if(grepl('\\$', input[i+j]) ){break}
-      print(paste0("inside  ", dir,"/", input[i+j]))
-      val =  str_split(input[i+j],' ',2) %>% unlist()
-      
-      print(c(dir,val))
-     x<- x %>% append(paste0(dir,"/", input[i+j]))
-      
+  }else if (splitLine[1] == "$") ## if it's a command
+  {
+    # if it's changing directory
+    if(splitLine[2] == "cd")
+    {
+      if(splitLine[3] == "..") # changing up
+      {       
+        # chop the last directory off path
+        splitPath <- strsplit(path,"/")
+        splitPath <- splitPath[[1]][-length(splitPath[[1]])]  
+        splitPath <- splitPath[-1]
+        path <- "/"
+        for (folder in splitPath)
+        {
+          #print(folder)
+          path <- paste(path, folder, "/", sep="")
+          print(paste0("path =",path))
+        }
+      }else{
+        path <- paste(path, splitLine[3], "/", sep="")
+        print(paste0("path =",path))
       }
-  } 
+    }
+    
+  }else
+  {   # this is a file
+    fileCount <- fileCount+1
+    fileList[[fileCount]] <- data.frame(fileName = splitLine[2], fileSize = splitLine[1], filePath = path )
+    
+  }
+
+  
 }
 
-## make an empty df to hold directories
-all_dir_sizes<-data.frame()
+fileList <- do.call(rbind, fileList)
+expandedList <- fileList
+startCell <- 1
 
-## make df from the list x with the top dir, and the files within it, and their size
-df <- data.frame('x' = x %>% unlist()) %>% 
-  separate(x, c('dir', 'file'), '/') %>%
-  mutate(size = as.numeric(gsub("([a-z])|([.])", '', file))) %>%
-  mutate(file = gsub("([0-9])", '', file)) %>% 
-  replace(is.na(.),0) %>% 
-  arrange(dir)
+while (startCell > 0){
+  fileList <- expandedList[c(startCell:nrow(expandedList)),]
+  startCell <- 0
+  splitPath <- strsplit(fileList$filePath, "/")
+  longestPath <- 0
 
-df %>%head(n=10)
+  fileCount <- 0
+  moreFiles <- 0
+  for (i in splitPath)
+  {
 
+    fileCount <- fileCount+1
+    initialLength <- length(strsplit(fileList[fileCount,]$filePath, "/"))
 
-n=1
+    length(i)
+    if (length(i) > 1)
+    {
+      subdir <- i[-length(i)]
+      subdir <- subdir[-1]
 
-has_sub_dir<-'' #
-## look for directories that have sub directories within them
-## whilst there is something keep doing this
-while(!identical(has_sub_dir, character(0))) {
- print(n)
-  ## find if the directory contains another dir
-  has_sub_dir <- df$dir[grepl('dir', df$file)] %>% unique()
-  #has_sub_dir %>% head() %>% print()
-  
-  ## group any dir don't contain others i.e in their base form
-  ## and find their size
-  total_dir_size <-
-    df %>% filter(!dir %in% has_sub_dir) %>%
-    group_by(dir) %>%
-    summarise(size = sum(size))
-  
-  total_dir_size %>% arrange() %>% head()%>% print()
-  
-  print(paste0("number found = ",total_dir_size %>% nrow()))
-  
-  ## add their sizes to this list
-  all_dir_sizes <- all_dir_sizes %>% rbind(total_dir_size)
-  print(paste0("total dir = ",all_dir_sizes %>% nrow()))
-  
-  ## now join back into the df giving the sub-directory it's size
-  ## rename the sub directory now we've delt with it
-  df <- df %>% filter(dir %in% has_sub_dir) %>%
-    left_join(total_dir_size, by = c('file' = 'dir')) %>%
-    replace(is.na(.), 0) %>%
-    mutate(file = case_when(size.y > 0 ~ str_replace(file, 'dir', ''),
-                            size.y <= 0 ~ file)) %>%
-    mutate(size = size.x + size.y) %>%
-    select(dir, file, size)
-  
-  #df  %>% head() %>% print()
-  ## show all the directories and their sizes
-  #all_dir_sizes %>% arrange(dir) %>% print()
-  n=n+1
-  if(total_dir_size %>% nrow() ==0){break}
+      path <- "/"
+      for (folder in subdir)
+      {
+        path <- paste(path, folder, "/", sep="")
+      }
+      print(path)
+
+      endLength <- length(strsplit(path, "/"))
+
+      newLine <- fileList[fileCount,]
+
+      newLine$filePath <- path
+      expandedList <- rbind(expandedList, newLine)
+      if (startCell == 0) startCell <- nrow(expandedList)
+    }
+
+  }
+}
+# 
+# # Part 1 solution
+expandedList <- expandedList[order(expandedList$filePath ),]
+Folders <- split(expandedList, rleid(expandedList$filePath))
+
+bigFolderThreshold <- 100000
+biggestFolder <- 0
+sumSmallFolders <- 0
+for(folder in Folders)
+{
+  if (sum(as.numeric(folder$fileSize) ) <= bigFolderThreshold)
+  {
+    sumSmallFolders <- sumSmallFolders+(sum(as.numeric(folder$fileSize) ))
+  }
 
 }
+print(sumSmallFolders)
 
+# Part 2 solution
+outerDirectory <- Folders[[1]]
+TotalDiskUsage <- sum(as.numeric(outerDirectory$fileSize))
+FreeSpace <- 70000000 - TotalDiskUsage
+NeedToDelete <- 30000000 - FreeSpace
 
-write.csv(df, "output.csv")
+bigFolderThreshold <- NeedToDelete # 30000000
+biggestFolder <- 0
+sumSmallFolders <- 0
+count <- 0
+bigFolders <- list()
+for(folder in Folders)
+{
 
-data.frame(y = input) %>% #head() %>% 
-  mutate(lag_y =lag(y),
-         lead_y = lead(y)
-         ) %>% 
-  select(lag_y, y, lead_y) %>% 
-  filter(y == '$ ls') %>% 
-  head()
+  if (sum(as.numeric(folder$fileSize) ) >= bigFolderThreshold)
+  {
+    count <- count+1
+    bigFolders[[count]] <- sum(as.numeric(folder$fileSize) )
+  }
 
-
-
+}
+print(min(unlist(bigFolders)))
 
