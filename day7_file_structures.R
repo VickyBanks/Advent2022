@@ -4,18 +4,28 @@ library(tidyverse)
 # test<- read.csv("day7_test.csv")
 # test<-test$output 
 # 
-# input<- read.csv("day7_input.csv")
-# input<-input$output 
-# input %>% head()
+input<- read.csv("day7_input.csv")
+input %>% head()
 
 ## internet solution
-
-input <- read.csv("day7_input.txt")
 eof <- nrow(input)
 
 fileCount <- 0
 fileList <- list()
 path <- "/"
+
+############### How this works ##################
+# The initial system is in the top dir so the path is just /
+# Then if the entry is a dir it's path is the current path (initally just /) + the dir name
+# this part isn't actually needed
+
+# then if the entry is a command given by a $ 
+# look to see if it changes dir with 'cd'. 
+# Then add this dir to the path so /new_dir/ to make a new path
+# if it has '..' it's going up a dir, so chop off the last one from the path so /a/b/c/ will become /a/b/
+# then if its not dir and not a $ command then it's a file, at the path that's currently been built
+# split this file into the size and name, and add the path.
+# add all these to a list
 
 for (i in 1:eof){
   
@@ -27,8 +37,8 @@ for (i in 1:eof){
   # if the line is a directory make a path
   if (splitLine[1] == "dir")
   {
-    newpath <- paste(path, splitLine[2], "/", sep="")
-    print(paste0("new path =",newpath))
+    # newpath <- paste(path, splitLine[2], "/", sep="")
+    # print(paste0("new path =",newpath))
     
   }else if (splitLine[1] == "$") ## if it's a command
   {
@@ -61,8 +71,8 @@ for (i in 1:eof){
     
   }
 
-  
 }
+
 
 fileList <- do.call(rbind, fileList)
 expandedList <- fileList
