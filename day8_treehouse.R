@@ -16,6 +16,7 @@ input <-
 input %>% head()
 
 write.csv(input,'day8_input_clean.csv', row.names = FALSE)
+
 #### Task 1 - find all the elements where every element above,left, right below 
 ### has at least one element of the same or bigger size
 visible_test<- matrix(nrow=99, ncol=99)
@@ -73,6 +74,39 @@ n_pos-visible_test[!is.na(visible_test)] %>% sum()
 
 ### part 2
 ### you need to find how many trees are between the given tree and the first of the same height or more
+## then multiple each direction's number together to get a scenic score
+
+scenic_score <- function(x,y) {
+  
+  this_tree <- input[x,y]
+  
+  if (any(x == 1, x == 99, y == 1, y == 99))   return(0)
+  
+  scores <- c(min(which(input[(x-1):1,y] >= this_tree)[1],length(input[(x-1):1]),na.rm = T),    #up 
+              min(which(input[(x+1):99,y] >= this_tree)[1],length(input[(x+1):99]),na.rm = T),   #down
+              min(which(input[x,(y-1):1] >= this_tree)[1],length(input[(y-1):1]),na.rm = T),    #left
+              min(which(input[x,(y+1):99] >= this_tree)[1],length(input[(y+1):99]),na.rm = T))
+  
+  score <- scores[1]*scores[2]*scores[3]*scores[4]
+  
+  return(score)
+  
+}
+
+scenic_trees <- matrix(nrow=99, ncol=99)
+
+for (x in 1:99) {
+  for (y in 1:99)
+    scenic_trees[x,y] <- scenic_score(x,y)
+}
+
+max(scenic_trees)
+
+
+
+
+
+
 
 
 
