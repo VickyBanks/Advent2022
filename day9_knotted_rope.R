@@ -32,7 +32,7 @@ steps_df %>% head()
 # turn this into a sequence of steps
 steps<-steps_df[rep(seq_len(dim(steps_df)[1]), steps_df$n_steps), 1, drop = FALSE]
 steps %>% head()
-write.csv(steps, 'day9_input_clean.csv', row.names = FALSE)
+#write.csv(steps, 'day9_input_clean.csv', row.names = FALSE)
 
 ## set up matrix
 ## the matrix seems to be infinite in size
@@ -57,8 +57,8 @@ for(n in 1:nrow(steps)){
   ## find the position of the H in the matrix
   x <- which(!is.na(head), TRUE)[1]
   y <- which(!is.na(head), TRUE)[2]
-  
-  
+
+
   print(paste0("step is ", steps[[1]][n]))
   if(steps[[1]][n] == 'R') {head[x, y + 1] <- 'H'
   }else if (steps[[1]][n] == 'L') {head[x, y - 1] <- 'H'
@@ -68,7 +68,7 @@ for(n in 1:nrow(steps)){
   head[x,y]<-NA #set old position to NA
   #head %>% print()
   #tail %>% print()
-  
+
   # ## visualise the steps for the example
   # head2<-head
   # tail2<-tail
@@ -87,19 +87,19 @@ for(n in 1:nrow(steps)){
     print('move')
     tail_x <- which(!is.na(tail), TRUE)[1]
     tail_y <- which(!is.na(tail), TRUE)[2]
-    
+
     if(tail_x - x ==0 ){new_tail_x= tail_x } else if(x>tail_x){new_tail_x<-tail_x+1} else{new_tail_x<-tail_x-1}
     if(tail_y - y ==0 ){new_tail_y= tail_y } else if(y>tail_y){new_tail_y<-tail_y+1} else{new_tail_y<-tail_y-1}
-    
+
     tail[new_tail_x,new_tail_y]<-'T'
     tail[tail_x,tail_y]<-NA
     #tail %>% print()
-  }else {print('still adjacent') 
+  }else {print('still adjacent')
       }
-  
-  
+
+
   tail_pos<- tail_pos %>% rbind(which(!is.na(tail), TRUE))
-  
+
   ## visualise the steps for the example
   # head2<-head
   # tail2<-tail
@@ -113,7 +113,7 @@ tail %>% print()
 
 
 ## now find out how many places the tail visited
-tail_pos<-data.frame(tail_pos)%>% unique() 
+tail_pos<-data.frame(tail_pos)%>% unique()
 total_pos<- tail_pos %>% unique() %>% nrow()
 print(total_pos)
 
@@ -123,7 +123,7 @@ tail_positions<- matrix(nrow = 1200, ncol =1200)
 for(i in 1:total_pos){
   row = tail_pos$row[i]
   col = tail_pos$col[i]
-  
+
 
   tail_positions[row,col]<-1
 }
@@ -132,9 +132,5 @@ print(total_pos) ##6266
 
 tail_positions[is.na(tail_positions)]<-0
 write.csv(tail_positions, 'day9_tail_positions.csv', row.names = FALSE)
-
-
-
-
 
 
