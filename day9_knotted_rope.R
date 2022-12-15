@@ -6,17 +6,17 @@ library(tidyverse)
 
 ## task is to find every x,y position tail visited and count them
 
-find_valid_pos<-function(x,y){
+find_valid_pos<-function(df, x,y){
   ## check if the surrounding matrix elements exist (i.e not outside the dimensions)
-  valid_pos <- c(tail[x,y])
-  if(x+1 <= nrow(tail)){ valid_pos<-valid_pos %>% append(tail[x+1,y])}## one below
-  if(x-1 >0){ valid_pos<-valid_pos %>% append(tail[x-1,y])}## one above
-  if(y+1 <= ncol(tail)){ valid_pos<-valid_pos %>% append(tail[x,y+1])}## one right
-  if(y-1 > 0){ valid_pos<-valid_pos %>% append(tail[x,y-1])}## one left
-  if(x+1 <= nrow(tail) & y+1 <= ncol(tail)){ valid_pos<-valid_pos %>% append(tail[x+1,y+1])}## diagonal down right
-  if(x+1 <= nrow(tail) & y-1 > 0){ valid_pos<-valid_pos %>% append(tail[x+1,y+-1])}## diagonal down left
-  if(x-1 >0 & y+1 <= ncol(tail)){ valid_pos<-valid_pos %>% append(tail[x-1,y+1])}## diagonal up right
-  if(x-1 >0 & y-1 >0){ valid_pos<-valid_pos %>% append(tail[x-1,y-1])}## diagonal up left
+  valid_pos <- c(df[x,y])
+  if(x+1 <= nrow(df)){ valid_pos<-valid_pos %>% append(df[x+1,y])}## one below
+  if(x-1 >0){ valid_pos<-valid_pos %>% append(df[x-1,y])}## one above
+  if(y+1 <= ncol(df)){ valid_pos<-valid_pos %>% append(df[x,y+1])}## one right
+  if(y-1 > 0){ valid_pos<-valid_pos %>% append(df[x,y-1])}## one left
+  if(x+1 <= nrow(df) & y+1 <= ncol(df)){ valid_pos<-valid_pos %>% append(df[x+1,y+1])}## diagonal down right
+  if(x+1 <= nrow(df) & y-1 > 0){ valid_pos<-valid_pos %>% append(df[x+1,y+-1])}## diagonal down left
+  if(x-1 >0 & y+1 <= ncol(df)){ valid_pos<-valid_pos %>% append(df[x-1,y+1])}## diagonal up right
+  if(x-1 >0 & y-1 >0){ valid_pos<-valid_pos %>% append(df[x-1,y-1])}## diagonal up left
   
   return(valid_pos)
 }
@@ -25,6 +25,7 @@ find_valid_pos<-function(x,y){
 ### steps
 steps_df <-
   readLines("day9_input.csv")  %>%
+  #readLines("day9_example2.csv")  %>%
   data.frame() %>%
   separate('.', c('direction', 'n_steps'), ' ') %>%
   mutate(n_steps = as.numeric(n_steps))
@@ -34,103 +35,107 @@ steps<-steps_df[rep(seq_len(dim(steps_df)[1]), steps_df$n_steps), 1, drop = FALS
 steps %>% head()
 #write.csv(steps, 'day9_input_clean.csv', row.names = FALSE)
 
+
+
+#### part 2 - the length of the chain H-T is much longer - H+9
+
+move_element<-function(df, value,comparison_df, comparison_value){
+  ## x and y have now changed
+  x <- which(comparison_df == comparison_value, TRUE)[1]
+  y <- which(comparison_df == comparison_value, TRUE)[2]
+
+  ## check if the surrounding matrix elements exist (i.e not outside the dimensions)
+  valid_pos <- find_valid_pos(df,x,y)
+  
+  ## if the current tail is not adjecent to the head then move
+  if(all(valid_pos == '')){
+    #print(paste0('move ',value))
+    element_x <- which(df == value, TRUE)[1]
+    element_y <- which(df == value, TRUE)[2]
+    
+    if(element_x - x ==0 ){new_element_x= element_x } else if(x>element_x){new_element_x<-element_x+1} else{new_element_x<-element_x-1}
+    if(element_y - y ==0 ){new_element_y= element_y } else if(y>element_y){new_element_y<-element_y+1} else{new_element_y<-element_y-1}
+    
+    df[new_element_x,new_element_y]<-value
+    df[element_x,element_y]<-''
+    
+  }else {#print(paste0('value ',value,' still adjacent'))
+  }
+  return(df)
+}
+
 ## set up matrix
 ## the matrix seems to be infinite in size
-head<-matrix(nrow = 1200, ncol = 1200)
-tail<-matrix(nrow = 1200, ncol = 1200)
+#head<-matrix(nrow = 15, ncol = 15) %>% replace(is.na(.), '')
+for(n in 0:9){assign(paste0('mat',n), matrix(nrow = 1200, ncol = 1200) %>% replace(is.na(.), ''))}
+mat_set<-Filter(function(x) is(x, "matrix"), mget(ls()))
 
 #starting points
 x =500
 y =500
-head[x,y]<-'H'
-tail[x,y]<-'T'
+for(n in 1:10){
+  mat_set[[n]][x,y]<-as.character(n-1)
+  
+}
 
-head
-tail
+view_rope <- function() {
+  head2 <- mat_set[[1]]
+  for (x in 2:length(mat_set)) {
+    mat <- mat_set[[x]]
+    head2[mat != ''] <- mat[mat != '']
+  }
+  #print(head2)
+}
+view_rope()
+
+# Now there are 9 pieces following the head
+# H123456789
 
 #starting position for the tail
-tail_pos<- which(!is.na(tail), TRUE)
-print(Sys.time())
+tail_pos<- which(mat_set[[10]] =='9', TRUE)
+
 ## loop over every step and move the tail to follow the head
 for(n in 1:nrow(steps)){
+  
   print(n)
   ## find the position of the H in the matrix
-  x <- which(!is.na(head), TRUE)[1]
-  y <- which(!is.na(head), TRUE)[2]
-
-
+  x <- which(mat_set[[1]] == '0', TRUE)[1]
+  y <- which(mat_set[[1]] == '0', TRUE)[2]
+  
   print(paste0("step is ", steps[[1]][n]))
-  if(steps[[1]][n] == 'R') {head[x, y + 1] <- 'H'
-  }else if (steps[[1]][n] == 'L') {head[x, y - 1] <- 'H'
-  }else if (steps[[1]][n] == 'U') {head[x - 1, y] <- 'H'
-  }else if (steps[[1]][n] == 'D') {head[x + 1, y] <- 'H'}
-
-  head[x,y]<-NA #set old position to NA
-  #head %>% print()
-  #tail %>% print()
-
-  # ## visualise the steps for the example
-  # head2<-head
-  # tail2<-tail
-  # head2[!is.na(tail2)] <- tail2[!is.na(tail2)]
-  # head2[is.na(head2)] <-""
-  # print(head2)
-
-  ## x and y have now changed
-  x <- which(!is.na(head), TRUE)[1]
-  y <- which(!is.na(head), TRUE)[2]
-  ## check if the surrounding matrix elements exist (i.e not outside the dimensions)
-  valid_pos <- find_valid_pos(x,y)
-
-  ## if they're all NA then move the tail
-  if(all(is.na(valid_pos))){
-    print('move')
-    tail_x <- which(!is.na(tail), TRUE)[1]
-    tail_y <- which(!is.na(tail), TRUE)[2]
-
-    if(tail_x - x ==0 ){new_tail_x= tail_x } else if(x>tail_x){new_tail_x<-tail_x+1} else{new_tail_x<-tail_x-1}
-    if(tail_y - y ==0 ){new_tail_y= tail_y } else if(y>tail_y){new_tail_y<-tail_y+1} else{new_tail_y<-tail_y-1}
-
-    tail[new_tail_x,new_tail_y]<-'T'
-    tail[tail_x,tail_y]<-NA
-    #tail %>% print()
-  }else {print('still adjacent')
-      }
-
-
-  tail_pos<- tail_pos %>% rbind(which(!is.na(tail), TRUE))
-
+  if(steps[[1]][n] == 'R') {mat_set[[1]][x, y + 1] <- '0'
+  }else if (steps[[1]][n] == 'L') {mat_set[[1]][x, y - 1] <- '0'
+  }else if (steps[[1]][n] == 'U') {mat_set[[1]][x - 1, y] <- '0'
+  }else if (steps[[1]][n] == 'D') {mat_set[[1]][x + 1, y] <- '0'}
+  
+  mat_set[[1]][x,y]<-'' #set old position to
+  
   ## visualise the steps for the example
-  # head2<-head
-  # tail2<-tail
-  # head2[!is.na(tail2)] <- tail2[!is.na(tail2)]
-  # head2[is.na(head2)] <-""
-  # print(head2)
+  
+  for (n in 2:length(mat_set)) {
+
+    mat_set[[n]] <- move_element(
+      df = mat_set[[n]],
+      value = as.character(n-1),
+      comparison_df = mat_set[[n-1]],
+      comparison_value = as.character(n-2)
+    )
+  }
+  
+  
+  tail_pos<- tail_pos %>% rbind(which(mat_set[[10]] =='9', TRUE))
+  
+  ## visualise the steps for the example
+  #view_rope()
 }
-head %>% print()
-tail %>% print()
+# head %>% print()
+# tail %>% print()
+
+
+tail_pos %>% unique() %>% nrow() ##2369
 
 
 
-## now find out how many places the tail visited
-tail_pos<-data.frame(tail_pos)%>% unique()
-total_pos<- tail_pos %>% unique() %>% nrow()
-print(total_pos)
 
-## visualise
-tail_positions<- matrix(nrow = 1200, ncol =1200)
-
-for(i in 1:total_pos){
-  row = tail_pos$row[i]
-  col = tail_pos$col[i]
-
-
-  tail_positions[row,col]<-1
-}
-#tail_positions
-print(total_pos) ##6266
-
-tail_positions[is.na(tail_positions)]<-0
-write.csv(tail_positions, 'day9_tail_positions.csv', row.names = FALSE)
 
 
